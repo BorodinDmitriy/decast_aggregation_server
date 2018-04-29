@@ -211,46 +211,46 @@ class GetPayBill(APIView):
     result["rate"] = "-"
     result["value"] = "-"
     
-    try:
+    #try:
       #Token.objects.filter(name="decast_eirc").update(token=result["rate"])
       #print(Token.objects.filter(name="decast_eirc"))
-      token = Token.objects.get(name="decast_eirc")
-      print(token)
-      err = check_eirc_token(token)
-      print('WAS')
-      print(err)
-      if (err == 0):
-	print('WAS2')
-	err = refresh_eirc_token(token)
-        print(err)
-        token = Token.objects.get(name="decast_eirc")
-        print('WAS3')
-        print(token)
-        err = check_eirc_token(token)
-        print(err)
-	if (err == 0):
-          print(report)
+      #token = Token.objects.get(name="decast_eirc")
+      #print(token)
+     # err = check_eirc_token(token)
+     # print('WAS')
+      #print(err)
+     # if (err == 0):
+	#print('WAS2')
+	#err = refresh_eirc_token(token)
+        #print(err)
+        #token = Token.objects.get(name="decast_eirc")
+        #print('WAS3')
+        #print(token)
+        #err = check_eirc_token(token)
+        #print(err)
+	#if (err == 0):
+         # print(report)
           #SendGetPayBillReport.delay(json.dumps(report),0)
-	  return Response(result,status=status.HTTP_401_UNAUTHORIZED)
-    except:
-      print(report)
+	  #return Response(result,status=status.HTTP_401_UNAUTHORIZED)
+    #except:
+     # print(report)
       #SendGetPayBillReport.delay(json.dumps(report),0)
-      return Response(result,status=status.HTTP_401_UNAUTHORIZED)
+      #return Response(result,status=status.HTTP_401_UNAUTHORIZED)
 
-    try:
-      token = (request.META.get('HTTP_AUTHORIZATION')).split(' ', 1)[1]
-      print(token)
-      err = check_token(token)
-      if (err == 0):
-	err = refresh_token(token)
-	if (err == 0):
-          print(report)
+    #try:
+     # token = (request.META.get('HTTP_AUTHORIZATION')).split(' ', 1)[1]
+      #print(token)
+      #err = check_token(token)
+      #if (err == 0):
+	#err = refresh_token(token)
+	#if (err == 0):
+         # print(report)
           #SendGetPayBillReport.delay(json.dumps(report),0)
-	  return Response(result,status=status.HTTP_401_UNAUTHORIZED)
-    except:
-      print(report)
+	  #return Response(result,status=status.HTTP_401_UNAUTHORIZED)
+    #except:
+     # print(report)
       #SendGetPayBillReport.delay(json.dumps(report),0)
-      return Response(result,status=status.HTTP_401_UNAUTHORIZED)
+      #return Response(result,status=status.HTTP_401_UNAUTHORIZED)
     
     
     try:
