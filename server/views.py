@@ -333,22 +333,23 @@ class DevicesByUserId(APIView):
   def get(self,request,id):
     print(settings.APPS['decast_eirc'])
 
-    token_eirc = Token.objects.get(name="decast_billing")
-    print(token_eirc)
-    try:
-      token = (request.META.get('HTTP_AUTHORIZATION')).split(' ', 1)[1]
-      print(token)
-      err = check_token(token)
-      if (err == 0):
-	err = refresh_token(token)
-	if (err == 0):
-	  return Response(status=status.HTTP_401_UNAUTHORIZED)
-    except:
-      return Response(status=status.HTTP_401_UNAUTHORIZED)
+    #token_eirc = Token.objects.get(name="decast_billing")
+    #print(token_eirc)
+    #try:
+     # token = (request.META.get('HTTP_AUTHORIZATION')).split(' ', 1)[1]
+     # print(token)
+     # err = check_token(token)
+     # if (err == 0):
+	#err = refresh_token(token)
+	#if (err == 0):
+	 # return Response(status=status.HTTP_401_UNAUTHORIZED)
+   # except:
+     # return Response(status=status.HTTP_401_UNAUTHORIZED)
     
     
     try:
-      url = 'http://localhost:8000/users/' + str(id) + '/devices/'
+      url = 'https://decast-mobile-backend.herokuapp.com/users/' + str(id) + '/devices/'
+      #url = 'http://localhost:8000/users/' + str(id) + '/devices/'
       logger.info("Getting devices by user id: " + str(url))
       response = requests.get(url)
       return Response(response.json(),status=response.status_code)
@@ -361,19 +362,20 @@ class DevicesByUserId(APIView):
     device={}
     device_id=0
     
-    try:
-      token = (request.META.get('HTTP_AUTHORIZATION')).split(' ', 1)[1]
-      print(token)
-      err = check_token(token)
-      if (err == 0):
-	err = refresh_token(token)
-	if (err == 0):
-	  return Response("Unauthorized",status=status.HTTP_401_UNAUTHORIZED)
-    except:
-      return Response("Unauthorized",status=status.HTTP_401_UNAUTHORIZED)
+    #try:
+      #token = (request.META.get('HTTP_AUTHORIZATION')).split(' ', 1)[1]
+     # print(token)
+      #err = check_token(token)
+      #if (err == 0):
+	#err = refresh_token(token)
+	#if (err == 0):
+	  #return Response("Unauthorized",status=status.HTTP_401_UNAUTHORIZED)
+   # except:
+     # return Response("Unauthorized",status=status.HTTP_401_UNAUTHORIZED)
     
     try: 
-      url = 'http://localhost:8000/users/' + str(id) + '/devices/'
+      url = 'https://decast-mobile-backend.herokuapp.com/users/' + str(id) + '/devices/'
+      #url = 'http://localhost:8000/users/' + str(id) + '/devices/'
       logger.info('Creating new device: ' + str(url))
       response = requests.post(url,data=request.data)
       device_id = response.json()
@@ -381,17 +383,20 @@ class DevicesByUserId(APIView):
 	raise CustomValidation(device_id['detail'],status=status.HTTP_500_INTERNAL_SERVER_ERROR)
       logger.info("Device id: " + str(device_id))
       
-      url = 'http://localhost:8000/devices/' + str(device_id)
+      url = 'https://decast-mobile-backend.herokuapp.com/devices/' + str(device_id)
+      #url = 'http://localhost:8000/devices/' + str(device_id)
       logger.info('Getting new device data: ' + str(url))
       device = requests.get(url).json()
       logger.info("Device data: " + str(device_id))
       
-      url = 'http://localhost:8000/devices/' + str(device_id) + '/readings/'
+      url = 'https://decast-mobile-backend.herokuapp.com/devices/' + str(device_id) + '/readings/'
+      #url = 'http://localhost:8000/devices/' + str(device_id) + '/readings/'
       logger.info('Setting init reading value : ' + str(url))
       response = requests.post(url,data={"value":"000000"})
     except:
       if (self.isNum(str(device_id))):
-	url = 'http://localhost:8000/devices/' + str(device_id) + '/'
+        url = 'https://decast-mobile-backend.herokuapp.com/devices/' + str(device_id) + '/'
+	#url = 'http://localhost:8000/devices/' + str(device_id) + '/'
 	logger.info("Deleting device by id: " + str(url))
 	response = requests.delete(url)
 	return Response(response,status=response.status_code)
@@ -407,7 +412,8 @@ class DevicesByUserId(APIView):
 	"serial_number":device["serial_number"]
 	}
       try:
-	url = 'http://localhost:8002/eirc_devices/'
+	url = 'https://decast-eirc.herokuapp.com/eirc_devices/'
+	#url = 'http://localhost:8002/eirc_devices/'
 	logger.info('Registering device in eirc: ' + str(url))
 	response = requests.post(url,data=eirc_data)
 
@@ -415,7 +421,8 @@ class DevicesByUserId(APIView):
 	return Response(device_id,status=response.status_code)
       except:
 	if (self.isNum(str(device_id))):
-	  url = 'http://localhost:8000/devices/' + str(device_id) + '/'
+	  url = 'https://decast-mobile-backend.herokuapp.com/devices/' + str(device_id) + '/'
+	  #url = 'http://localhost:8000/devices/' + str(device_id) + '/'
 	  logger.info("Deleting device by id: " + str(url))
 	  response = requests.delete(url)
 	  return Response(response.json(),status=response.status_code)
