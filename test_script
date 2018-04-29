@@ -1,0 +1,61 @@
+http://localhost:8000/ - mobile-backend
+http://localhost:8001/ - decast_billing
+http://localhost:8002/ - decast_eirc
+http://localhost:8003/ - decast_aggregation_server
+http://localhost:8004/ - decast_stats
+
+https://decast-mobile-backend.herokuapp.com - live mobile backend
+
+python manage.py runserver
+python manage.py runserver 8001
+python manage.py runserver 8002
+python manage.py runserver 8003
+# from /decast_aggregation_server run the celery with rabbitmq for delayed tasks in separate console
+python manage.py celeryd -l info
+
+curl -X POST -d "username=Dimoon&password=qwertyuiop" http://localhost:8000/auth/api-token-auth/
+
+
+curl -X POST -H "Content-Type: application/json;" -d "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkRpbW9vbiIsIm9yaWdfaWF0IjoxNTExOTA4NjM5LCJ1c2VyX2lkIjozLCJlbWFpbCI6ImRlbWFuc2VuQHlhbmRleC5ydSIsImV4cCI6MTUxMTkxMDQzOX0.DCwyrLLnlNFLWkSzjPNPlHTyLwawXxrDWbw8Au0bIJg\"}" http://localhost:8000/auth/api-token-refresh/
+{"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkRpbW9vbiIsIm9yaWdfaWF0IjoxNTExOTA4NjM5LCJ1c2VyX2lkIjozLCJlbWFpbCI6ImRlbWFuc2VuQHlhbmRleC5ydSIsImV4cCI6MTUxMTkxMDYzOX0.0j0m_jIEJ1gTKEqKDimjKZX4M5_6PMIDFZnwazX2KBA"}
+
+curl -X POST -H "Content-Type: application/json;" -d "{\"username\":\"Dimoon\",\"password\":\"qwertyuiop\"}" http://localhost:8000/auth/api-token-auth/
+
+
+# User must be created in the admin of the http://localhost:8000/admin or http://localhost:8000/user/?email=1 POST {"id": 101,"login":"1@1.com"}
+
+http://localhost:8003/users/99/devices/ GET
+http://localhost:8003/eirc_devices/ GET
+http://localhost:8003/users/99/devices/ POST {"personal_account":"1234-1234-1234-1236","serial_number":"123456789"}
+http://localhost:8003/users/99/devices/ GET
+http://localhost:8003/eirc_devices/ GET
+http://localhost:8003/devices/<new_device_id>/get_pay_bill/ GET
+http://localhost:8003/devices/<new_device_id>/readings/ GET
+http://localhost:8003/devices/<new_device_id>/readings/ POST {"value":"000015"}
+http://localhost:8003/devices/<new_device_id>/get_pay_bill/ GET
+http://localhost:8003/devices/<new_device_id>/change_device_account/ PUT {"personal_account":"1234-1234-1234-1237"}
+http://localhost:8003/devices/<new_device_id>/get_pay_bill/ GET
+http://localhost:8003/eirc_devices/<new_device_id>/ GET
+http://localhost:8003/devices/<new_device_id>/ DELETE
+http://localhost:8003/devices/<id>/ GET
+http://localhost:8003/devices/ GET
+http://localhost:8003/rates/ GET
+http://localhost:8003/user/?email=test@gmail.com GET
+http://localhost:8003/rates/<id>/ GET
+http://localhost:8003/rate/?type=gas GET
+
+coverage run --source="." manage.py test
+coverage report
+
+
+# для сервиса статистики
+# 8004 port
+// админ должен сначала залогиниться через нативную джанговскую админку - сделано специально для доп проверок и подтверждения его роли суперюзера
+curl -X POST -H "Content-Type: application/json;" -d "{\"personal_account\":\"1234-1234-1234-1234\",\"reading\":\"000015\",\"rate\":\"3.75\",\"status\":\"False\"}" http://localhost:8004/pay_bill_report/
+curl -X POST -H "Content-Type: application/json;" -d "{\"old\":\"1234-1234-1234-1234\",\"new\":\"1234-1234-1234-1233\",\"status\":\"False\"}" http://localhost:8004/change_account_report/
+curl -X POST -H "Content-Type: application/json;" -d "{\"email\":\"demansen@yandex.ru\",\"status\":\"True\"}" http://localhost:8003/auth/send_report/
+
+// показать с клиента отправку статистики
+// отключить decast_stats, показать, что идет повторная постановка в очередь
+// показать лог при превышении числа посылок
+
