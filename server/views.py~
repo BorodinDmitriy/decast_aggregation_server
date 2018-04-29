@@ -263,6 +263,7 @@ class GetPayBill(APIView):
         report["personal_account"] = response.json()["personal_account"]
       except:
         print(report)
+	response = requests.post("https://decast-stats.herokuapp.com/pay_bill_report/",data=json.dumps(report))
         #SendGetPayBillReport.delay(json.dumps(report),0)
 	return Response(result,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
       try:
@@ -304,6 +305,7 @@ class GetPayBill(APIView):
           report["rate"] = str(rate)
 	except:
           print(report)
+	  response = requests.post("https://decast-stats.herokuapp.com/pay_bill_report/",data=json.dumps(report))
           #SendGetPayBillReport.delay(json.dumps(report),0)
 	  return Response(result,status=response.status_code)
       except:
@@ -312,10 +314,12 @@ class GetPayBill(APIView):
 	return Response(result,status=response.status_code)
       report["status"] = "True"
       print(report)
+      response = requests.post("https://decast-stats.herokuapp.com/pay_bill_report/",data=json.dumps(report))
       #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=response.status_code)
     except:
       logger.info("Error in getting pay bill")
+      response = requests.post("https://decast-stats.herokuapp.com/pay_bill_report/",data=json.dumps(report))
       #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
@@ -412,7 +416,8 @@ class DevicesByUserId(APIView):
 	"serial_number":device["serial_number"]
 	}
       try:
-	url = 'http://localhost:8002/eirc_devices/'
+	url = 'https://decast-eirc.herokuapp.com/eirc_devices/'
+	#url = 'http://localhost:8002/eirc_devices/'
 	logger.info('Registering device in eirc: ' + str(url))
 	response = requests.post(url,data=eirc_data)
 
@@ -420,7 +425,8 @@ class DevicesByUserId(APIView):
 	return Response(device_id,status=response.status_code)
       except:
 	if (self.isNum(str(device_id))):
-	  url = 'http://localhost:8000/devices/' + str(device_id) + '/'
+	  url = 'https://decast-mobile-backend.herokuapp.com/devices/' + str(device_id) + '/'
+	  #url = 'http://localhost:8000/devices/' + str(device_id) + '/'
 	  logger.info("Deleting device by id: " + str(url))
 	  response = requests.delete(url)
 	  return Response(response.json(),status=response.status_code)
