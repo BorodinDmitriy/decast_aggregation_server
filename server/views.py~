@@ -11,13 +11,15 @@ from rest_framework.exceptions import APIException
 from rest_framework import status
 from tasks import *
 from django.conf import settings
-from models import Token
+from models import Token, ServerTask
 from serializers import TokenSerializer
+from uuid import uuid1
 
 import requests
 import logging
 import json
-
+import pika
+import threading
 
 from kombu.pools import producers
 from kombu import Exchange, Queue
@@ -30,6 +32,20 @@ from kombu import Connection
 
 logger = logging.getLogger('django')
 
+def callback(ch, method, properties, body):
+    print(" [x] Received %r" % body)
+def run():
+    print("WAAAT")
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
+    print(connection)
+    channel.queue_declare(queue='test')
+    channel.basic_consume(callback,
+                      queue='test',
+                      no_ack=True)
+    print(' [*] Waiting for messages. To exit press CTRL+C')
+    channel.start_consuming()
+    
 def send_as_task(connection, args=(), kwargs={}):
     payload = { 'args': args, 'kwargs': kwargs}
     routing_key = 'sendtestrabbitmq2'
@@ -41,13 +57,14 @@ def send_as_task(connection, args=(), kwargs={}):
       # produce
       producer = conn.Producer(serializer='json')
       print(producer)
-      producer.publish(payload,exchange=Exchange('default'), routing_key='sendtestrabbitmq2',declare=[queue])
+      return producer.publish(payload,exchange=Exchange('default'),routing_key='sendtestrabbitmq2',declare=[queue])
 
 
 def check_token(token):
   try:
     checked_token = ''
-    url = "http://localhost:8000/auth/api-token-verify/"
+    url = "https://decast-mobile-backend.herokuapp.com/auth/api-token-verify"
+    #url = "http://localhost:8000/auth/api-token-verify/"
     headers = {'Content-Type' : 'application/json'}
     data = {'token' : str(token)}
     response = (requests.post(url, data=data)).json()
@@ -66,7 +83,8 @@ def check_token(token):
 def refresh_token(token):
   try:
     checked_token = ''
-    url = "http://localhost:8000/auth/api-token-refresh/"
+    url = "https://decast-mobile-backend.herokuapp.com/auth/api-token-refresh/"
+    #url = "http://localhost:8000/auth/api-token-refresh/"
     headers = {'Content-Type' : 'application/json'}
     data = {'token' : str(token)}
     response = (requests.post(url, data=data)).json()
@@ -135,24 +153,42 @@ class CustomValidation(APIException):
         else: self.detail = {'detail': force_text(self.default_detail)}
 
 # Create your views here.
+  
+    
+# /worker/
+class SendWorker(APIView):
+
+  def get(self, request):
+    SendResponse.apply_async()
+    
+    #t = threading.Thread(target=run)
+    #t.start()
+    
 
 # /auth/send_report/
 # for sending report from client
 class SendAuthRep(APIView):
 
   def post(self, request):
-    SendResponse.apply_async()
+    #SendResponse.apply_async()
     try:
       #a = SendAuthReport.delay(request.data,0)
       #print(a)
       #SendAuthReportChecker.delay(a, request.data, 0)
-      #SendTestRabbitMQ2.apply_async(args=[request.data, 0])
+      #b = SendTestRabbitMQ2.delay(request.data,0)
+      gu = uuid1().hex
+      dat = request.data
+      dat['guid'] = gu
+      print("dat=")
+      print(dat)
+      ServerTask.objects.create(guid=str(gu),processed=0)
+      b = SendTestRabbitMQ2.apply_async((dat,0),{},expires=60)
+      print(b)
+      SendAuthReportChecker.delay(b, dat, 0)
       
-      connection = Connection('amqp://guest:guest@localhost:5672//')
-      a = send_as_task(connection,args=(request.data,0), kwargs={})
-      print('Sended report checker')
-      SendAuthReportChecker.delay(a, request.data, 0)
-      
+      #connection = Connection('amqp://guest:guest@localhost:5672//')
+      #a = send_as_task(connection,args=(request.data,0), kwargs={})
+      #print(a)
 
       return Response(status=status.HTTP_200_OK)
     except:
@@ -194,11 +230,11 @@ class GetPayBill(APIView):
         print(err)
 	if (err == 0):
           print(report)
-          SendGetPayBillReport.delay(json.dumps(report),0)
+          #SendGetPayBillReport.delay(json.dumps(report),0)
 	  return Response(result,status=status.HTTP_401_UNAUTHORIZED)
     except:
       print(report)
-      SendGetPayBillReport.delay(json.dumps(report),0)
+      #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=status.HTTP_401_UNAUTHORIZED)
 
     try:
@@ -209,39 +245,43 @@ class GetPayBill(APIView):
 	err = refresh_token(token)
 	if (err == 0):
           print(report)
-          SendGetPayBillReport.delay(json.dumps(report),0)
+          #SendGetPayBillReport.delay(json.dumps(report),0)
 	  return Response(result,status=status.HTTP_401_UNAUTHORIZED)
     except:
       print(report)
-      SendGetPayBillReport.delay(json.dumps(report),0)
+      #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=status.HTTP_401_UNAUTHORIZED)
     
     
     try:
       try:
-	url = 'http://localhost:8000/devices/' + str(id) + '/'
+	url = "https://decast-mobile-backend.herokuapp.com/devices/" + str(id) + "/"
+	#url = 'http://localhost:8000/devices/' + str(id) + '/'
 	logger.info("Getting device data: " + str(url))
 	response = requests.get(url)
 	result["personal_account"] = response.json()["personal_account"]
         report["personal_account"] = response.json()["personal_account"]
       except:
         print(report)
-        SendGetPayBillReport.delay(json.dumps(report),0)
+        #SendGetPayBillReport.delay(json.dumps(report),0)
 	return Response(result,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
       try:
-	url = 'http://localhost:8000/devices/' + str(id) + '/'
+	url = "https://decast-mobile-backend.herokuapp.com/devices/" + str(id) + "/"
+	#url = 'http://localhost:8000/devices/' + str(id) + '/'
 	logger.info("Getting device data: " + str(url))
 	response = requests.get(url)
 	sent_reading = response.json()["sent_reading"]
 	logger.info("Device's last reading: " + str(sent_reading))
       
-	url = 'http://localhost:8000/devices/' + str(id) + '/readings/' + str(sent_reading) + '/'
+	url = "https://decast-mobile-backend.herokuapp.com/devices/" + str(id) + '/readings/' + str(sent_reading) + '/'
+	#url = 'http://localhost:8000/devices/' + str(id) + '/readings/' + str(sent_reading) + '/'
 	logger.info("Getting last reading value: " + str(url))
 	response = requests.get(url)
 	current_value = response.json()["value"]
 	logger.info("Device's last reading value: " + str(current_value))
     
-	url = 'http://localhost:8002/eirc_devices/' + str(id) + '/'
+	url = 'https://decast-eirc.herokuapp.com/eirc_devices/' + str(id) + '/'
+	#url = 'http://localhost:8002/eirc_devices/' + str(id) + '/'
         headers = {'Authorization' : 'JWT ' + str(Token.objects.get(name="decast_eirc"))}
 	logger.info("Getting eirc reading value: " + str(url))
 	response = requests.get(url)
@@ -264,20 +304,19 @@ class GetPayBill(APIView):
           report["rate"] = str(rate)
 	except:
           print(report)
-          SendGetPayBillReport.delay(json.dumps(report),0)
+          #SendGetPayBillReport.delay(json.dumps(report),0)
 	  return Response(result,status=response.status_code)
       except:
         print(report)
-        SendGetPayBillReport.delay(json.dumps(report),0)
+        #SendGetPayBillReport.delay(json.dumps(report),0)
 	return Response(result,status=response.status_code)
       report["status"] = "True"
       print(report)
-      SendGetPayBillReport.delay(json.dumps(report),0)
+      #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=response.status_code)
     except:
       logger.info("Error in getting pay bill")
-      print(report)
-      SendGetPayBillReport.delay(json.dumps(report),0)
+      #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 # /users/<id>/devices/

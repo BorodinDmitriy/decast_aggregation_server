@@ -63,7 +63,8 @@ def send_as_task(connection, args=(), kwargs={}):
 def check_token(token):
   try:
     checked_token = ''
-    url = "http://localhost:8000/auth/api-token-verify/"
+    url = "https://decast-mobile-backend.herokuapp.com/auth/api-token-verify"
+    #url = "http://localhost:8000/auth/api-token-verify/"
     headers = {'Content-Type' : 'application/json'}
     data = {'token' : str(token)}
     response = (requests.post(url, data=data)).json()
@@ -82,7 +83,8 @@ def check_token(token):
 def refresh_token(token):
   try:
     checked_token = ''
-    url = "http://localhost:8000/auth/api-token-refresh/"
+    url = "https://decast-mobile-backend.herokuapp.com/auth/api-token-refresh/"
+    #url = "http://localhost:8000/auth/api-token-refresh/"
     headers = {'Content-Type' : 'application/json'}
     data = {'token' : str(token)}
     response = (requests.post(url, data=data)).json()
@@ -228,11 +230,11 @@ class GetPayBill(APIView):
         print(err)
 	if (err == 0):
           print(report)
-          SendGetPayBillReport.delay(json.dumps(report),0)
+          #SendGetPayBillReport.delay(json.dumps(report),0)
 	  return Response(result,status=status.HTTP_401_UNAUTHORIZED)
     except:
       print(report)
-      SendGetPayBillReport.delay(json.dumps(report),0)
+      #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=status.HTTP_401_UNAUTHORIZED)
 
     try:
@@ -243,39 +245,43 @@ class GetPayBill(APIView):
 	err = refresh_token(token)
 	if (err == 0):
           print(report)
-          SendGetPayBillReport.delay(json.dumps(report),0)
+          #SendGetPayBillReport.delay(json.dumps(report),0)
 	  return Response(result,status=status.HTTP_401_UNAUTHORIZED)
     except:
       print(report)
-      SendGetPayBillReport.delay(json.dumps(report),0)
+      #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=status.HTTP_401_UNAUTHORIZED)
     
     
     try:
       try:
-	url = 'http://localhost:8000/devices/' + str(id) + '/'
+	url = "https://decast-mobile-backend.herokuapp.com/devices/" + str(id) + "/"
+	#url = 'http://localhost:8000/devices/' + str(id) + '/'
 	logger.info("Getting device data: " + str(url))
 	response = requests.get(url)
 	result["personal_account"] = response.json()["personal_account"]
         report["personal_account"] = response.json()["personal_account"]
       except:
         print(report)
-        SendGetPayBillReport.delay(json.dumps(report),0)
+        #SendGetPayBillReport.delay(json.dumps(report),0)
 	return Response(result,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
       try:
-	url = 'http://localhost:8000/devices/' + str(id) + '/'
+	url = "https://decast-mobile-backend.herokuapp.com/devices/" + str(id) + "/"
+	#url = 'http://localhost:8000/devices/' + str(id) + '/'
 	logger.info("Getting device data: " + str(url))
 	response = requests.get(url)
 	sent_reading = response.json()["sent_reading"]
 	logger.info("Device's last reading: " + str(sent_reading))
       
-	url = 'http://localhost:8000/devices/' + str(id) + '/readings/' + str(sent_reading) + '/'
+	url = "https://decast-mobile-backend.herokuapp.com/devices/" + str(id) + '/readings/' + str(sent_reading) + '/'
+	#url = 'http://localhost:8000/devices/' + str(id) + '/readings/' + str(sent_reading) + '/'
 	logger.info("Getting last reading value: " + str(url))
 	response = requests.get(url)
 	current_value = response.json()["value"]
 	logger.info("Device's last reading value: " + str(current_value))
     
-	url = 'http://localhost:8002/eirc_devices/' + str(id) + '/'
+	url = 'https://decast-eirc.herokuapp.com/eirc_devices/' + str(id) + '/'
+	#url = 'http://localhost:8002/eirc_devices/' + str(id) + '/'
         headers = {'Authorization' : 'JWT ' + str(Token.objects.get(name="decast_eirc"))}
 	logger.info("Getting eirc reading value: " + str(url))
 	response = requests.get(url)
@@ -298,19 +304,19 @@ class GetPayBill(APIView):
           report["rate"] = str(rate)
 	except:
           print(report)
-          SendGetPayBillReport.delay(json.dumps(report),0)
+          #SendGetPayBillReport.delay(json.dumps(report),0)
 	  return Response(result,status=response.status_code)
       except:
         print(report)
-        SendGetPayBillReport.delay(json.dumps(report),0)
+        #SendGetPayBillReport.delay(json.dumps(report),0)
 	return Response(result,status=response.status_code)
       report["status"] = "True"
       print(report)
-      SendGetPayBillReport.delay(json.dumps(report),0)
+      #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=response.status_code)
     except:
       logger.info("Error in getting pay bill")
-      SendGetPayBillReport.delay(json.dumps(report),0)
+      #SendGetPayBillReport.delay(json.dumps(report),0)
       return Response(result,status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 # /users/<id>/devices/
