@@ -580,7 +580,8 @@ class DeviceReadings(APIView):
     return self.isNum(reading)
   def get(self,request,id):
     try:
-      url = 'http://localhost:8000/devices/' + str(id) + '/readings/'
+      url = 'https://decast-mobile-backend.herokuapp.com/devices/' + str(id) + '/readings/'
+      #url = 'http://localhost:8000/devices/' + str(id) + '/readings/'
       logger.info('Getting local device readings: ' + str(url))
       response = requests.get(url)
       logger.info("Success.")
@@ -590,16 +591,16 @@ class DeviceReadings(APIView):
       return Response('Error in getting local device reading. ',status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   def post(self,request,id):
     
-    try:
-      token = (request.META.get('HTTP_AUTHORIZATION')).split(' ', 1)[1]
-      print(token)
-      err = check_token(token)
-      if (err == 0):
-	err = refresh_token(token)
-	if (err == 0):
-	  return Response("Unauthorized",status=status.HTTP_401_UNAUTHORIZED)
-    except:
-      return Response("Unauthorized",status=status.HTTP_401_UNAUTHORIZED)
+    #try:
+    #  token = (request.META.get('HTTP_AUTHORIZATION')).split(' ', 1)[1]
+    #  print(token)
+    #  err = check_token(token)
+    #  if (err == 0):
+	#err = refresh_token(token)
+	#if (err == 0):
+	#  return Response("Unauthorized",status=status.HTTP_401_UNAUTHORIZED)
+   # except:
+     # return Response("Unauthorized",status=status.HTTP_401_UNAUTHORIZED)
     
     
     try:
@@ -608,7 +609,8 @@ class DeviceReadings(APIView):
     except:
       return Response("Incorrect value",status=status.HTTP_400_BAD_REQUEST)
     try:
-      url = 'http://localhost:8000/devices/' + str(id) + '/readings/'
+      url = 'https://decast-mobile-backend.herokuapp.com/devices/' + str(id) + '/readings/'
+      #url = 'http://localhost:8000/devices/' + str(id) + '/readings/'
       logger.info('Creating local device readings: ' + str(url))
       response = requests.post(url,data=request.data)
       return Response(response.json(),status=response.status_code)
