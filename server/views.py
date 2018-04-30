@@ -208,7 +208,7 @@ class GetPayBill(APIView):
     result = {}
     result["personal_account"] = "-"
     result["consumption_volume"] = "-"
-    result["rate"] = "15.34"
+    result["rate"] = "-"
     result["value"] = "-"
     
     #try:
